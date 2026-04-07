@@ -261,16 +261,14 @@ generate_harmless_change() {
         esac
     done
     
-    # 确保文件超过200行
+    # 确保文件超过44行
     local line_count=$(wc -l < "$TS_FILE_PATH")
-    if [ $line_count -lt 200 ]; then
+    if [ $line_count -lt 44 ]; then
         # 补充添加更多内容
-        for i in {51..100}; do
+        for i in {51..70}; do
             echo -e "export const extraVariable_${timestamp}_${i} = 'extra_${i}';" >> "$TS_FILE_PATH"
         done
     fi
-    
-    log_message ""
 }
 
 # 主执行逻辑
