@@ -14,8 +14,16 @@ log_message() {
 
 # 配置区域 - 请根据实际情况修改
 GIT_REPO_PATH="/Users/harrisking/code/AI-Movies-Fe" # 修改为您的Git仓库路径
-TS_FILE_PATH="src/utils/tracking.ts" # 要修改的TS文件路径
 REMOTE_BRANCH="feat/llc/liteCreate" # 远程分支名称
+
+# 5个目标文件数组
+TS_FILES=(
+    "src/utils/tracking.ts"
+    "src/models/logger.ts"
+    "src/constants/helpers.ts"
+    "src/utils/constants.ts"
+    "src/utils/validation.ts"
+)
 
 # 20个中文提交信息
 CHINESE_COMMITS=(
@@ -99,6 +107,9 @@ cd "$GIT_REPO_PATH" || {
     log_message "错误: 无法进入仓库目录: $GIT_REPO_PATH"
     exit 1
 }
+
+# 随机选择一个目标文件
+TS_FILE_PATH=${TS_FILES[$RANDOM % ${#TS_FILES[@]}]}
 
 log_message "开始执行Git自动提交脚本"
 log_message "仓库路径: $(pwd)"
