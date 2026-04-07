@@ -266,12 +266,11 @@ generate_harmless_change() {
     if [ $line_count -lt 200 ]; then
         # 补充添加更多内容
         for i in {51..100}; do
-            echo -e "\n// 补充注释行 ${i} - 确保文件超过200行" >> "$TS_FILE_PATH"
             echo -e "export const extraVariable_${timestamp}_${i} = 'extra_${i}';" >> "$TS_FILE_PATH"
         done
     fi
     
-    log_message "生成了超过200行的TS代码"
+    log_message ""
 }
 
 # 主执行逻辑
@@ -337,7 +336,7 @@ main() {
 }
 
 # 捕获脚本退出
-trap 'log_message "脚本被中断"; exit 1' INT TERM
+trap 'log_message "中断"; exit 1' INT TERM
 
 # 执行主函数
 main
