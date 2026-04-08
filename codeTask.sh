@@ -97,11 +97,6 @@ CHINESE_DETAILS=(
     "修复了类型检查配置，改进了开发体验"
 )
 
-# 日志函数
-log_message() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
-}
-
 # 进入仓库目录
 cd "$GIT_REPO_PATH" || {
     log_message "错误: 无法进入仓库目录: $GIT_REPO_PATH"
@@ -148,63 +143,12 @@ ensure_git_config() {
 }
 
 # 生成中文提交信息
-generate_chinese_commit_message() {
-    # 随机选择一个提交信息
-    local commit_index=$((RANDOM % ${#CHINESE_COMMITS[@]}))
-    local description_index=$((RANDOM % ${#CHINESE_DESCRIPTIONS[@]}))
-    local detail_index=$((RANDOM % ${#CHINESE_DETAILS[@]}))
-    
-    # 随机选择一种格式
-    case $((RANDOM % 4)) in
-        0)
-            # 格式1: 简单修复
-            echo "${CHINESE_COMMITS[$commit_index]}"
-            ;;
-        1)
-            # 格式2: 带描述的修复
-            echo "${CHINESE_COMMITS[$commit_index]} - ${CHINESE_DESCRIPTIONS[$description_index]}"
-            ;;
-        2)
-            # 格式3: 详细的修复
-            echo "${CHINESE_COMMITS[$commit_index]}: ${CHINESE_DETAILS[$detail_index]}"
-            ;;
-        3)
-            # 格式4: 带时间戳的修复
-            local timestamp=$(date '+%Y%m%d%H%M')
-            local short_commit="${CHINESE_COMMITS[$commit_index]}"
-            echo "${short_commit} (${timestamp})"
-            ;;
-    esac
-}
-
-# 生成中文提交信息
 generate_chinese_commit_with_emoji() {
     # 随机选择一个提交信息
     local commit_index=$((RANDOM % ${#CHINESE_COMMITS[@]}))
     local description_index=$((RANDOM % ${#CHINESE_DESCRIPTIONS[@]}))
     local detail_index=$((RANDOM % ${#CHINESE_DETAILS[@]}))
-    
-    # 随机选择一种格式
-    case $((RANDOM % 4)) in
-        0)
-            # 格式1: 简单修复
-            echo "${CHINESE_COMMITS[$commit_index]}"
-            ;;
-        1)
-            # 格式2: 带描述的修复
-            echo "${CHINESE_COMMITS[$commit_index]} - ${CHINESE_DESCRIPTIONS[$description_index]}"
-            ;;
-        2)
-            # 格式3: 详细的修复
-            echo "${CHINESE_COMMITS[$commit_index]}: ${CHINESE_DETAILS[$detail_index]}"
-            ;;
-        3)
-            # 格式4: 带时间戳的修复
-            local timestamp=$(date '+%Y%m%d%H%M')
-            local short_commit="${CHINESE_COMMITS[$commit_index]}"
-            echo "${short_commit} (${timestamp})"
-            ;;
-    esac
+    echo "${CHINESE_COMMITS[$commit_index]} - ${CHINESE_DESCRIPTIONS[$description_index]}"
 }
 
 # 创建或修改跟踪文件
