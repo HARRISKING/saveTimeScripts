@@ -282,8 +282,6 @@ generate_harmless_change() {
     
     # 替换原文件
     mv "${TS_FILE_PATH}.tmp" "$TS_FILE_PATH"
-    
-    log_message "生成了最多44行的TS代码"
 }
 
 # 主执行逻辑
