@@ -19,8 +19,8 @@ fi
 
 # 检查是否是工作日
 DAY_OF_WEEK=$(date +%u)  # 1=周一, 5=周五
-if [ "$DAY_OF_WEEK" -gt 5 ]; then
-    echo "📅 今天是周末，不启动定时任务"
+if [ "$DAY_OF_WEEK" -gt 6 ]; then
+    echo "📅 今天是周日，不启动定时任务"
     exit 0
 fi
 

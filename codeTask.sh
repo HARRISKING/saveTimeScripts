@@ -14,7 +14,7 @@ log_message() {
 
 # 配置区域 - 请根据实际情况修改
 GIT_REPO_PATH="/Users/harrisking/code/AI-Movies-Fe" # 修改为您的Git仓库路径
-REMOTE_BRANCH="feat/llc/liteCreate" # 远程分支名称
+REMOTE_BRANCH="feat/llc/newLiteCreate" # 远程分支名称
 
 # 5个目标文件数组
 TS_FILES=(
