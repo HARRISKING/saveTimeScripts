@@ -142,6 +142,13 @@ ensure_git_config() {
     fi
 }
 
+# 首字母大写 (兼容 Bash 3.2)
+capitalize() {
+    local str="$1"
+    local first=$(echo "${str:0:1}" | tr '[:lower:]' '[:upper:]')
+    echo "${first}${str:1}"
+}
+
 # 生成中文提交信息
 generate_chinese_commit_with_emoji() {
     # 根据文件名生成对应的提交信息
@@ -223,6 +230,7 @@ export interface BaseEvent {
   userId?: string;
 }
 
+// --- generated ---
 EOF
                 ;;
             *logger*)
@@ -239,6 +247,7 @@ export interface LogConfig {
   enableConsole: boolean;
 }
 
+// --- generated ---
 EOF
                 ;;
             *helpers*)
@@ -253,6 +262,7 @@ export interface CommonOptions {
   retries?: number;
 }
 
+// --- generated ---
 EOF
                 ;;
             *constants*)
@@ -266,6 +276,7 @@ export const API_BASE_URL = '/api/v1';
 
 export const REQUEST_TIMEOUT = 30000;
 
+// --- generated ---
 EOF
                 ;;
             *validation*)
@@ -281,6 +292,7 @@ export interface ValidationRule {
   message?: string;
 }
 
+// --- generated ---
 EOF
                 ;;
             *)
@@ -295,6 +307,7 @@ export interface BaseResponse {
   message: string;
 }
 
+// --- generated ---
 EOF
                 ;;
         esac
@@ -310,8 +323,8 @@ generate_harmless_change() {
     local timestamp=$(date +%s)
     local date_str=$(date '+%Y-%m-%d %H:%M:%S')
     
-    # 清空文件，保留头部
-    head -n 15 "$TS_FILE_PATH" > "${TS_FILE_PATH}.tmp"
+    # 清空文件，保留头部（到 marker 行为止）
+    sed -n '1,/^\/\/ --- generated ---$/p' "$TS_FILE_PATH" > "${TS_FILE_PATH}.tmp"
     
     # 根据文件名生成相应的业务代码
     case "$TS_FILE_PATH" in
@@ -341,7 +354,7 @@ generate_harmless_change() {
 
 # 生成追踪相关代码
 generate_tracking_code() {
-    local types=("PageView" "ClickEvent" "UserAction" "ScreenTransition" "ApiCall" "ErrorLog" "PerformanceMetric")
+    local types=("PageView" "Click" "Scroll" "Navigation" "ApiCall" "ErrorCapture" "Performance")
     local type=${types[$RANDOM % ${#types[@]}]}
     
     echo -e "\nexport interface ${type}Event {\n  eventId: string;\n  timestamp: number;\n  userId?: string;\n  sessionId: string;\n  data: Record<string, unknown>;\n}" >> "${TS_FILE_PATH}.tmp"
@@ -357,66 +370,61 @@ generate_tracking_code() {
 
 # 生成日志相关代码
 generate_logger_code() {
-    local levels=("debug" "info" "warn" "error" "fatal")
+    local levels=("debug" "info" "warn" "error")
     local level=${levels[$RANDOM % ${#levels[@]}]}
     local modules=("Auth" "Api" "Storage" "Network" "UI" "Route")
     local module=${modules[$RANDOM % ${#modules[@]}]}
-    
-    echo -e "\nexport type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';" >> "${TS_FILE_PATH}.tmp"
-    
+
     echo -e "\nexport interface LogEntry {\n  level: LogLevel;\n  message: string;\n  timestamp: number;\n  module: string;\n  details?: Record<string, unknown>;\n}" >> "${TS_FILE_PATH}.tmp"
-    
+
     echo -e "\nexport const ${module}Logger = {\n  ${level}: (msg: string, details?: Record<string, unknown>) => {\n    console.${level}(msg, details);\n  }\n};" >> "${TS_FILE_PATH}.tmp"
-    
-    echo -e "\n// FIXME: 处理日志脱敏" >> "${TS_FILE_PATH}.tmp"
-    
+
     echo -e "\nexport const formatLogEntry = (entry: LogEntry): string => {\n  return \`[\${entry.level}] \${entry.module}: \${entry.message}\`;\n};" >> "${TS_FILE_PATH}.tmp"
 }
 
 # 生成工具函数代码
 generate_helpers_code() {
-    local funcs=("formatDate" "debounce" "throttle" "deepClone" "uuid" "md5" "base64" "queryString")
+    local funcs=("formatDate" "debounce" "throttle" "deepClone" "uuid" "base64" "queryString")
     local func=${funcs[$RANDOM % ${#funcs[@]}]}
-    
-    echo -e "\nexport const ${func} = <T>(param: T): T => {\n  // 实现逻辑待补充\n  return param;\n};" >> "${TS_FILE_PATH}.tmp"
-    
-    echo -e "\nexport type ${func^}Options = {\n  timeout?: number;\n  retries?: number;\n  onError?: (err: Error) => void;\n};" >> "${TS_FILE_PATH}.tmp"
-    
+    local Func=$(capitalize "$func")
+
+    echo -e "\nexport const ${func} = <T>(param: T): T => {\n  return param;\n};" >> "${TS_FILE_PATH}.tmp"
+
+    echo -e "\nexport type ${Func}Options = {\n  timeout?: number;\n  retries?: number;\n  onError?: (err: Error) => void;\n};" >> "${TS_FILE_PATH}.tmp"
+
     echo -e "\n// TODO: 补充 ${func} 完整实现" >> "${TS_FILE_PATH}.tmp"
-    
-    echo -e "\nexport const create${func^}Handler = (options: ${func^}Options) => ({\n  execute: async <T>(input: T) => {\n    return input;\n  }\n});" >> "${TS_FILE_PATH}.tmp"
+
+    echo -e "\nexport const create${Func}Handler = (options: ${Func}Options) => ({\n  execute: async <T>(input: T) => {\n    return input;\n  }\n});" >> "${TS_FILE_PATH}.tmp"
 }
 
 # 生成常量相关代码
 generate_constants_code() {
-    local categories=("API" "ROUTE" "STATUS" "CONFIG" "REGEX")
+    local categories=("Api" "Route" "Http" "App" "Auth")
     local category=${categories[$RANDOM % ${#categories[@]}]}
-    
-    echo -e "\nexport const ${category}_ENDPOINTS = {\n  BASE: '/api/v1',\n  USERS: '/users',\n  AUTH: '/auth',\n  DATA: '/data'\n} as const;" >> "${TS_FILE_PATH}.tmp"
-    
-    echo -e "\nexport const ${category}_LIMITS = {\n  MAX_RETRY: 3,\n  TIMEOUT: 5000,\n  MAX_SIZE: 10 * 1024 * 1024\n};" >> "${TS_FILE_PATH}.tmp"
-    
+    local CATEGORY=$(echo "$category" | tr '[:lower:]' '[:upper:]')
+
+    echo -e "\nexport const ${CATEGORY}_ENDPOINTS = {\n  BASE: '/api/v1',\n  USERS: '/users',\n  AUTH: '/auth',\n  DATA: '/data'\n} as const;" >> "${TS_FILE_PATH}.tmp"
+
+    echo -e "\nexport const ${CATEGORY}_LIMITS = {\n  MAX_RETRY: 3,\n  TIMEOUT: 5000,\n  MAX_SIZE: 10 * 1024 * 1024\n};" >> "${TS_FILE_PATH}.tmp"
+
     echo -e "\nexport type ${category}Status = 'idle' | 'loading' | 'success' | 'error';" >> "${TS_FILE_PATH}.tmp"
-    
-    echo -e "\n// TODO: 统一常量命名规范" >> "${TS_FILE_PATH}.tmp"
-    
-    echo -e "\nexport const ${category}_MESSAGES = {\n  SUCCESS: '操作成功',\n  FAILURE: '操作失败',\n  TIMEOUT: '请求超时'\n};" >> "${TS_FILE_PATH}.tmp"
+
+    echo -e "\nexport const ${CATEGORY}_MESSAGES = {\n  SUCCESS: '操作成功',\n  FAILURE: '操作失败',\n  TIMEOUT: '请求超时'\n};" >> "${TS_FILE_PATH}.tmp"
 }
 
 # 生成验证相关代码
 generate_validation_code() {
     local validators=("email" "phone" "password" "url" "idCard" "bankCard")
     local validator=${validators[$RANDOM % ${#validators[@]}]}
-    
-    echo -e "\nexport interface ${validator^}Rule {\n  required?: boolean;\n  minLength?: number;\n  maxLength?: number;\n  pattern?: RegExp;\n  message?: string;\n}" >> "${TS_FILE_PATH}.tmp"
-    
+    local Validator=$(capitalize "$validator")
+
+    echo -e "\nexport interface ${Validator}Rule {\n  required?: boolean;\n  minLength?: number;\n  maxLength?: number;\n  pattern?: RegExp;\n  message?: string;\n}" >> "${TS_FILE_PATH}.tmp"
+
     echo -e "\nexport type ValidationResult = {\n  valid: boolean;\n  errors: string[];\n};" >> "${TS_FILE_PATH}.tmp"
-    
-    echo -e "\nexport const validate${validator^} = (value: string, rules: ${validator^}Rule[]): ValidationResult => {\n  const errors: string[] = [];\n  rules.forEach(rule => {\n    // 验证逻辑待实现\n  });\n  return { valid: errors.length === 0, errors };\n};" >> "${TS_FILE_PATH}.tmp"
-    
-    echo -e "\n// FIXME: 正则表达式性能优化" >> "${TS_FILE_PATH}.tmp"
-    
-    echo -e "\nexport const ${validator}Rules: ${validator^}Rule[] = [\n  { required: true, message: '该字段必填' }\n];" >> "${TS_FILE_PATH}.tmp"
+
+    echo -e "\nexport const validate${Validator} = (value: string, rules: ${Validator}Rule[]): ValidationResult => {\n  const errors: string[] = [];\n  rules.forEach(rule => {\n    if (rule.required && !value) errors.push(rule.message || 'required');\n  });\n  return { valid: errors.length === 0, errors };\n};" >> "${TS_FILE_PATH}.tmp"
+
+    echo -e "\nexport const ${validator}Rules: ${Validator}Rule[] = [\n  { required: true, message: '该字段必填' }\n];" >> "${TS_FILE_PATH}.tmp"
 }
 
 # 生成通用代码
