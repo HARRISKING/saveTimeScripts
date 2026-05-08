@@ -3,7 +3,7 @@
 # ============================================
 # Git 自动提交脚本 (macOS版本)
 # 由macOS定时服务控制执行时间
-# 每40分钟执行一次，仅在工作日9:00-20:30之间运行
+# 每40分44秒执行一次，仅在工作日9:00-20:30之间运行
 # ============================================
 
 # 日志函数
@@ -12,9 +12,38 @@ log_message() {
     echo "[$timestamp] $1"
 }
 
+# 检查是否在工作时间内
+check_work_time() {
+    local day_of_week=$(date +%u)
+    local hour=$(date +%H)
+    local minute=$(date +%M)
+    local time_val=$((10#$hour * 60 + 10#$minute))
+
+    # 只在周一到周六执行 (1-6)
+    if [ "$day_of_week" -gt 6 ]; then
+        log_message "非工作日，跳过"
+        exit 0
+    fi
+
+    # 只在 9:00-20:30 之间执行
+    if [ "$time_val" -lt 540 ] || [ "$time_val" -gt 1230 ]; then
+        log_message "非工作时间，跳过"
+        exit 0
+    fi
+
+    # 跳过午休 12:00-13:30
+    if [ "$time_val" -ge 720 ] && [ "$time_val" -lt 810 ]; then
+        log_message "午休时间，跳过"
+        exit 0
+    fi
+}
+
+check_work_time
+
 # 配置区域 - 请根据实际情况修改
 GIT_REPO_PATH="/Users/harrisking/code/AI-Movies-Fe" # 修改为您的Git仓库路径
-REMOTE_BRANCH="feat/llc/newLiteCreate" # 远程分支名称
+REMOTE_BRANCH="fix/llc/0508" # 远程分支名称
+# REMOTE_BRANCH="feat/llc/newLiteCreate" # 远程分支名称
 
 # 5个目标文件数组
 TS_FILES=(
@@ -444,15 +473,28 @@ main() {
     if ! check_git_status; then
         exit 1
     fi
-    
+
     # 确保Git配置
     ensure_git_config
-    
+
+    # 检测并恢复未解决的合并冲突
+    if [ -n "$(git ls-files --unmerged)" ]; then
+        log_message "检测到未解决的合并冲突，自动恢复..."
+        git merge --abort 2>/dev/null || git rebase --abort 2>/dev/null
+        git checkout -- . 2>/dev/null
+        log_message "冲突已清理"
+    fi
+
     # 拉取最新更改
     log_message "拉取远程更改..."
     if ! git pull origin "$REMOTE_BRANCH" --quiet; then
         log_message "拉取失败，尝试合并策略"
-        git pull --no-rebase origin "$REMOTE_BRANCH" --quiet
+        if ! git pull --no-rebase origin "$REMOTE_BRANCH" --quiet; then
+            log_message "合并策略也失败，放弃本次合并并跳过"
+            git merge --abort 2>/dev/null
+            git checkout -- . 2>/dev/null
+            exit 0
+        fi
     fi
     
     # 生成无害修改
